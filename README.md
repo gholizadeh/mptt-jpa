@@ -1,6 +1,8 @@
-# Modified Pre-order Tree Traversal - Implementation in Java Using JPA
+# Modified Pre-order Tree Traversal - Implementation in Java 8 Using JPA
 
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/works.hacker/mptt-jpa/badge.svg)](https://search.maven.org/artifact/works.hacker/mptt-jpa)
+
+**The source library is compatible with Java 11 and above, this is an edit to make this library compatible with Java 8**
 
 ## Introduction
 
@@ -164,40 +166,40 @@ treeRepo.setEntityClass(MpttRepository.class);
 Now you can use the repository as a standard `JpaRepository<TagTree, Long>`:
 
 ```java
-var persistedTreeNodesCount = treeRepo.count();
+Long persistedTreeNodesCount = treeRepo.count();
 ```
 
 Or create the sample tree from **Fig. 1: Sample Tree Structure.**
 
 ```java
-var root = new MpttNode("root");
-var treeId = treeRepo.startTree(root);
+MpttNode root = new MpttNode("root");
+Long treeId = treeRepo.startTree(root);
 
-var child1 = new MpttTree("child-1");
+MpttTree child1 = new MpttTree("child-1");
 treeRepo.addChild(root, child1);
 
-var subChild1 = new MpttNode("subChild-1");
+MpttNode subChild1 = new MpttNode("subChild-1");
 treeRepo.addChild(child1, subChild1);
 
-var subSubChild = new MpttNode("subSubChild");
+MpttNode subSubChild = new MpttNode("subSubChild");
 treeRepo.addChild(subChild1, subSubChild);
 
-var subChild2 = new MpttNode("subChild-2");
+MpttNode subChild2 = new MpttNode("subChild-2");
 treeRepo.addChild(child1, subChild2);
 
-var child2 = new MpttNode("child-2");
+MpttNode child2 = new MpttNode("child-2");
 treeRepo.addChild(root, child2);
 
-var lastSubChild = new MpttNode("lastSubChild");
+MpttNode lastSubChild = new MpttNode("lastSubChild");
 treeRepo.addChild(child2, lastSubChild);
 ```
 
 You can print the tree to a string:
 
 ```java
-var utils = new TreeUtils<>(treeRepo);
-var root = treeRepo.findTreeRoot(treeId);
-var fullTree = utils.printTree(root);
+TreeUtils<MpttNode> utils = new TreeUtils<>(treeRepo);
+MpttNode root = treeRepo.findTreeRoot(treeId);
+String fullTree = utils.printTree(root);
 ```
 
 The result would be a string containing a tree similar to the `tree` command line interface command:
@@ -216,8 +218,8 @@ The result would be a string containing a tree similar to the `tree` command lin
 You can print also a sub-tree:
 
 ```java
-var child1 = treeRepo.findByName("child-1");
-var partialTree = utils.printTree(child1);
+MpttNode child1 = treeRepo.findByName("child-1");
+String partialTree = utils.printTree(child1);
 ```
 
 ...to get:
@@ -233,15 +235,15 @@ var partialTree = utils.printTree(child1);
 To get a sorted list of the direct children of a node:
 
 ```java
-var root = treeRepo.findTreeRoot(treeId);
-var directChildren = treeRepo.findChildren(root);
+MpttNode root = treeRepo.findTreeRoot(treeId);
+List<MpttNode> directChildren = treeRepo.findChildren(root);
 ```
 
 To get the list of the ancestors of a node:
 
 ```java
-var subSubChild = treeRepo.findByName("subSubChild");
-var ancestors = treeRepo.findAncestors(subSubChild);
+MpttNode subSubChild = treeRepo.findByName("subSubChild");
+List<MpttNode> ancestors = treeRepo.findAncestors(subSubChild);
 ```
 
 Works the same for the `findParent` and `findSubTree`-operations.
@@ -249,9 +251,9 @@ Works the same for the `findParent` and `findSubTree`-operations.
 To remove a child from a parent:
 
 ```java
-var root = treeRepo.findByName("root");
-var child1 = treeRepo.findByName("child-1");
-var removed = treeRepo.removeChild(root, child1);
+MpttNode root = treeRepo.findByName("root");
+MpttNode child1 = treeRepo.findByName("child-1");
+List<MpttNode> removed = treeRepo.removeChild(root, child1);
 ```
 
 The resulting tree should be:

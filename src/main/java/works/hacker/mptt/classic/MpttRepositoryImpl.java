@@ -33,7 +33,7 @@ public abstract class MpttRepositoryImpl<T extends MpttEntity> implements MpttRe
   public Long startTree(T node) throws NodeAlreadyAttachedToTree {
     ensureNodeIsNotAttachedToAnyTree(node);
 
-    var treeId = generateTreeId();
+    Long treeId = generateTreeId();
     node.setTreeId(treeId);
     node.setLft(1L);
     node.setRgt(2L);
@@ -51,7 +51,7 @@ public abstract class MpttRepositoryImpl<T extends MpttEntity> implements MpttRe
 
   protected Long generateTreeId() {
     Long treeId = new Random().nextLong();
-    var query = String.format(
+    String query = String.format(
         "SELECT node FROM %s node WHERE node.treeId = :treeId",
         entityClass.getSimpleName());
     try {
@@ -67,7 +67,7 @@ public abstract class MpttRepositoryImpl<T extends MpttEntity> implements MpttRe
 
   @Override
   public T findTreeRoot(Long treeId) throws NoResultException {
-    var query = String.format(
+    String query = String.format(
         "SELECT node FROM %s node" +
             " WHERE node.treeId = :treeId AND node.lft = 1",
         entityClass.getSimpleName());
@@ -84,7 +84,7 @@ public abstract class MpttRepositoryImpl<T extends MpttEntity> implements MpttRe
     long childLft;
     long childRgt;
 
-    var rightMostChild = findRightMostChild(parent);
+    T rightMostChild = findRightMostChild(parent);
 
     if (rightMostChild == null) {
       childLft = parent.getLft() + 1;
@@ -116,9 +116,9 @@ public abstract class MpttRepositoryImpl<T extends MpttEntity> implements MpttRe
     ensureParentIsAttachedToTree(parent);
     ensureChildOfParent(parent, child);
 
-    var removed = findSubTree(child);
+    List<T> removed = findSubTree(child);
 
-    var decrement = child.getRgt() - child.getLft() + 1;
+    long decrement = child.getRgt() - child.getLft() + 1;
     findByTreeIdAndLftGreaterThan(parent.getTreeId(), child.getRgt())
         .forEach(n -> n.setLft(n.getLft() - decrement));
     findByTreeIdAndRgtGreaterThan(parent.getTreeId(), child.getRgt())
@@ -149,14 +149,14 @@ public abstract class MpttRepositoryImpl<T extends MpttEntity> implements MpttRe
     if (entityManager.contains(node)) {
       entityManager.remove(node);
     } else {
-      var attached = entityManager.find(entityClass, node);
+      T attached = entityManager.find(entityClass, node);
       entityManager.remove(attached);
     }
   }
 
   @Override
   public T findRightMostChild(T node) {
-    var query = String.format(
+    String query = String.format(
         "SELECT node FROM %s node" +
             " WHERE node.treeId = :treeId AND node.rgt = :rgt",
         entityClass.getSimpleName());
@@ -176,7 +176,7 @@ public abstract class MpttRepositoryImpl<T extends MpttEntity> implements MpttRe
 
   @Override
   public List<T> findByTreeIdAndLftGreaterThanEqual(Long treeId, Long lft) {
-    var query = String.format(
+    String query = String.format(
         "SELECT node" +
             " FROM %s node" +
             " WHERE node.treeId = :treeId" +
@@ -190,7 +190,7 @@ public abstract class MpttRepositoryImpl<T extends MpttEntity> implements MpttRe
 
   @Override
   public List<T> findByTreeIdAndLftGreaterThan(Long treeId, Long lft) {
-    var query = String.format(
+    String query = String.format(
         "SELECT node" +
             " FROM %s node" +
             " WHERE node.treeId = :treeId" +
@@ -204,7 +204,7 @@ public abstract class MpttRepositoryImpl<T extends MpttEntity> implements MpttRe
 
   @Override
   public List<T> findByTreeIdAndRgtGreaterThan(Long treeId, Long rgt) {
-    var query = String.format(
+    String query = String.format(
         "SELECT node" +
             " FROM %s node" +
             " WHERE node.treeId = :treeId" +
@@ -218,7 +218,7 @@ public abstract class MpttRepositoryImpl<T extends MpttEntity> implements MpttRe
 
   @Override
   public List<T> findChildren(T node) {
-    var query = String.format(
+    String query = String.format(
         "SELECT child" +
             " FROM %s child" +
             " WHERE child.treeId = :treeId" +
@@ -235,7 +235,7 @@ public abstract class MpttRepositoryImpl<T extends MpttEntity> implements MpttRe
 
   @Override
   public List<T> findSubTree(T node) {
-    var query = String.format(
+    String query = String.format(
         "SELECT node" +
             " FROM %s node" +
             " WHERE node.treeId = :treeId" +
@@ -250,7 +250,7 @@ public abstract class MpttRepositoryImpl<T extends MpttEntity> implements MpttRe
 
   @Override
   public List<T> findAncestors(T node) {
-    var query = String.format(
+    String query = String.format(
         "SELECT node" +
             " FROM %s node" +
             " WHERE node.treeId = :treeId" +
@@ -266,7 +266,7 @@ public abstract class MpttRepositoryImpl<T extends MpttEntity> implements MpttRe
 
   @Override
   public Optional<T> findParent(T node) {
-    var query = String.format(
+    String query = String.format(
         "SELECT node" +
             " FROM %s node" +
             " WHERE node.treeId = :treeId" +

@@ -32,7 +32,7 @@ public abstract class DyadicRepositoryImpl<T extends DyadicEntity> implements Dy
   public Long startTree(T node) throws NodeAlreadyAttachedToTree {
     ensureNodeIsNotAttachedToAnyTree(node);
 
-    var treeId = generateTreeId();
+    Long treeId = generateTreeId();
     node.setDefaults();
     node.setTreeId(treeId);
 
@@ -49,7 +49,7 @@ public abstract class DyadicRepositoryImpl<T extends DyadicEntity> implements Dy
 
   protected Long generateTreeId() {
     Long treeId = new Random().nextLong();
-    var query = String.format(
+    String query = String.format(
         "SELECT node FROM %s node WHERE node.treeId = :treeId",
         entityClass.getSimpleName());
     try {
@@ -65,7 +65,7 @@ public abstract class DyadicRepositoryImpl<T extends DyadicEntity> implements Dy
 
   @Override
   public T findTreeRoot(Long treeId) throws NoResultException {
-    var query = String.format(
+    String query = String.format(
         "SELECT node FROM %s node" +
             " WHERE node.treeId = :treeId" +
             " AND node.lft = 0 AND node.rgt = 1",
@@ -80,11 +80,11 @@ public abstract class DyadicRepositoryImpl<T extends DyadicEntity> implements Dy
     ensureParentIsAttachedToTree(parent);
     ensureNodeIsNotAttachedToAnyTree(child);
 
-    var youngest = findYoungestChild(parent);
-    if (youngest.isEmpty()) {
-      addFirstChild(parent, child);
-    } else {
+    Optional<T> youngest = findYoungestChild(parent);
+    if (youngest.isPresent()) {
       addNextChild(youngest.get(), child);
+    } else {
+      addFirstChild(parent, child);
     }
 
     entityManager.persist(child);
@@ -113,7 +113,7 @@ public abstract class DyadicRepositoryImpl<T extends DyadicEntity> implements Dy
     ensureParentIsAttachedToTree(parent);
     ensureChildOfParent(parent, child);
 
-    var removed = findSubTree(child);
+    List<T> removed = findSubTree(child);
     removed.forEach(this::removeNode);
     return removed;
   }
@@ -139,14 +139,14 @@ public abstract class DyadicRepositoryImpl<T extends DyadicEntity> implements Dy
     if (entityManager.contains(node)) {
       entityManager.remove(node);
     } else {
-      var attached = entityManager.find(entityClass, node);
+      T attached = entityManager.find(entityClass, node);
       entityManager.remove(attached);
     }
   }
 
   @Override
   public Optional<T> findYoungestChild(T parent) {
-    var query = String.format(
+    String query = String.format(
         "SELECT youngest FROM %s youngest" +
             " WHERE youngest.treeId = :treeId" +
             " AND youngest.depth = :depth" +
@@ -171,7 +171,7 @@ public abstract class DyadicRepositoryImpl<T extends DyadicEntity> implements Dy
 
   @Override
   public List<T> findChildren(T node) {
-    var query = String.format(
+    String query = String.format(
         "SELECT child" +
             " FROM %s child" +
             " WHERE child.treeId = :treeId" +
@@ -188,7 +188,7 @@ public abstract class DyadicRepositoryImpl<T extends DyadicEntity> implements Dy
 
   @Override
   public List<T> findSubTree(T node) {
-    var query = String.format(
+    String query = String.format(
         "SELECT node" +
             " FROM %s node" +
             " WHERE node.treeId = :treeId" +
@@ -203,7 +203,7 @@ public abstract class DyadicRepositoryImpl<T extends DyadicEntity> implements Dy
 
   @Override
   public List<T> findAncestors(T node) {
-    var query = String.format(
+    String query = String.format(
         "SELECT node" +
             " FROM %s node" +
             " WHERE node.treeId = :treeId" +
@@ -221,7 +221,7 @@ public abstract class DyadicRepositoryImpl<T extends DyadicEntity> implements Dy
 
   @Override
   public Optional<T> findParent(T node) {
-    var query = String.format(
+    String query = String.format(
         "SELECT node" +
             " FROM %s node" +
             " WHERE node.treeId = :treeId" +

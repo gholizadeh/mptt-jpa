@@ -21,6 +21,7 @@ import works.hacker.mptt.classic.MpttRepository;
 import javax.annotation.Resource;
 import javax.transaction.Transactional;
 import java.lang.reflect.InvocationTargetException;
+import java.util.List;
 import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -52,28 +53,28 @@ public class MpttNodeRepoTest {
   public void giveSaved_whenFindByName_thenOK() {
     assertThat(treeRepo.count(), is(0L));
 
-    var expected = new MpttNode("test-01");
+    MpttNode expected = new MpttNode("test-01");
     treeRepo.save(expected);
     assertThat(treeRepo.count(), is(1L));
 
-    var actual = treeRepo.findByName(expected.getName());
+    MpttNode actual = treeRepo.findByName(expected.getName());
     assertThat(actual.getId(), is(notNullValue()));
     assertThat(actual.getName(), is(expected.getName()));
   }
 
   @Test
   public void givenNoTree_whenConstructed_thenHasNoTreeId() {
-    var actual = new MpttNode("test");
+    MpttNode actual = new MpttNode("test");
     assertThat(actual.hasTreeId(), is(false));
   }
 
   @Test
   public void givenNoTree_whenStartTree_thenOK() {
-    var tree = new TreeWithNoChildren<>(treeRepo, utils);
+    TreeWithNoChildren<MpttNode> tree = new TreeWithNoChildren<>(treeRepo, utils);
 
     assertThat(treeRepo.count(), is(1L));
 
-    var actual = treeRepo.findByName(tree.root.getName());
+    MpttNode actual = treeRepo.findByName(tree.root.getName());
     assertThat(actual.getTreeId(), not(TreeEntity.NO_TREE_ID));
     assertThat(actual.getTreeId(), is(tree.treeId));
 
@@ -84,26 +85,26 @@ public class MpttNodeRepoTest {
   @Test
   public void givenTree_whenStartTreeWithUsedRootNode_thenError()
       throws TreeRepository.NodeAlreadyAttachedToTree {
-    var tree = new TreeWithNoChildren<>(treeRepo, utils);
+    TreeWithNoChildren<MpttNode> tree = new TreeWithNoChildren<>(treeRepo, utils);
 
     exceptionRule.expect(MpttRepository.NodeAlreadyAttachedToTree.class);
     exceptionRule.expectMessage(String.format("Node already has treeId set to %d", tree.treeId));
-    var root = treeRepo.findByName(tree.root.getName());
+    MpttNode root = treeRepo.findByName(tree.root.getName());
     treeRepo.startTree(root);
   }
 
   @Test
   public void givenTree_whenFindTreeRoot_thenOK() {
-    var tree = new TreeWithNoChildren<>(treeRepo, utils);
-    var actual = treeRepo.findTreeRoot(tree.treeId);
+    TreeWithNoChildren<MpttNode> tree = new TreeWithNoChildren<>(treeRepo, utils);
+    MpttNode actual = treeRepo.findTreeRoot(tree.treeId);
     assertThat(actual, is(tree.root));
   }
 
   @Test
   public void givenParentNodeNotAttachedToTree_whenAddChild_thenError()
       throws TreeRepository.NodeNotInTree, TreeRepository.NodeAlreadyAttachedToTree {
-    var parent = new MpttNode("parent");
-    var child = new MpttNode("child");
+    MpttNode parent = new MpttNode("parent");
+    MpttNode child = new MpttNode("child");
 
     exceptionRule.expect(TreeRepository.NodeNotInTree.class);
     exceptionRule.expectMessage(String.format("Parent node not attached to any tree: %s", parent));
@@ -113,11 +114,11 @@ public class MpttNodeRepoTest {
   @Test
   public void givenChildIsTreeRoot_whenAddChild_thenError()
       throws TreeRepository.NodeAlreadyAttachedToTree, TreeRepository.NodeNotInTree {
-    var parent = new MpttNode("parent");
-    var child = new MpttNode("child");
+    MpttNode parent = new MpttNode("parent");
+    MpttNode child = new MpttNode("child");
 
     treeRepo.startTree(parent);
-    var treeId = treeRepo.startTree(child);
+    Long treeId = treeRepo.startTree(child);
 
     exceptionRule.expect(MpttRepository.NodeAlreadyAttachedToTree.class);
     exceptionRule.expectMessage(String.format("Node already has treeId set to %d", treeId));
@@ -127,26 +128,26 @@ public class MpttNodeRepoTest {
   @Test
   public void givenEmptyTree_whenFindRightMostChild_thenNull()
       throws TreeRepository.NodeAlreadyAttachedToTree {
-    var root = new MpttNode("root");
+    MpttNode root = new MpttNode("root");
     treeRepo.startTree(root);
 
-    var actual = treeRepo.findRightMostChild(root);
+    MpttNode actual = treeRepo.findRightMostChild(root);
     assertThat(actual, is(nullValue()));
   }
 
   @Test
   public void givenEmptyTree_whenAddChild_thenOK()
       throws TreeRepository.NodeAlreadyAttachedToTree, TreeRepository.NodeNotInTree {
-    var root = new MpttNode("root");
+    MpttNode root = new MpttNode("root");
     treeRepo.startTree(root);
 
-    var child = new MpttNode("child");
+    MpttNode child = new MpttNode("child");
     treeRepo.addChild(root, child);
 
     assertThat(treeRepo.count(), is(2L));
 
-    var actualRoot = treeRepo.findByName("root");
-    var actualChild = treeRepo.findByName("child");
+    MpttNode actualRoot = treeRepo.findByName("root");
+    MpttNode actualChild = treeRepo.findByName("child");
 
     assertThat(actualRoot.getLft(), is(1L));
     assertThat(actualRoot.getRgt(), is(4L));
@@ -157,112 +158,112 @@ public class MpttNodeRepoTest {
 
   @Test
   public void givenTreeWithoutChildren_whenPrintTree_thenOK() {
-    var tree = new TreeWithNoChildren<>(treeRepo, utils);
+    TreeWithNoChildren<MpttNode> tree = new TreeWithNoChildren<>(treeRepo, utils);
     assertThat(utils.printTree(tree.root), is(tree.getExpected()));
   }
 
   @Test
   public void givenTreeWithOneChild_whenFindChildren_thenContainsOneChild() {
-    var tree = new TreeWithOneChild<>(treeRepo, utils);
-    var actual = treeRepo.findChildren(tree.root);
+    TreeWithOneChild<MpttNode> tree = new TreeWithOneChild<>(treeRepo, utils);
+    List<MpttNode> actual = treeRepo.findChildren(tree.root);
     assertThat(actual, containsInRelativeOrder(tree.child1));
   }
 
   @Test
   public void givenTreeWithChild_whenPrintTree_thenOK() {
-    var tree = new TreeWithOneChild<>(treeRepo, utils);
-    var actual = utils.printTree(tree.root);
+    TreeWithOneChild<MpttNode> tree = new TreeWithOneChild<>(treeRepo, utils);
+    String actual = utils.printTree(tree.root);
     assertThat(actual, is(tree.getExpected()));
   }
 
   @Test
   public void givenTreeWithTwoChildren_whenFindChildren_thenContainsTwoChildren() {
-    var tree = new TreeWithTwoChildren<>(treeRepo, utils);
-    var actual = treeRepo.findChildren(tree.root);
+    TreeWithTwoChildren<MpttNode> tree = new TreeWithTwoChildren<>(treeRepo, utils);
+    List<MpttNode> actual = treeRepo.findChildren(tree.root);
     assertThat(actual, containsInRelativeOrder(tree.child1, tree.child2));
   }
 
   @Test
   public void givenTreeWithTwoChildren_whenPrintTree_thenOK() {
-    var tree = new TreeWithTwoChildren<>(treeRepo, utils);
-    var actual = utils.printTree(tree.root);
+    TreeWithTwoChildren<MpttNode> tree = new TreeWithTwoChildren<>(treeRepo, utils);
+    String actual = utils.printTree(tree.root);
     assertThat(actual, is(tree.getExpected()));
   }
 
   @Test
   public void givenTreeWithChildAndSubChild_whenFindChildren_thenContainsOneChild() {
-    var tree = new TreeWithChildAndSubChild<>(treeRepo, utils);
-    var actual = treeRepo.findChildren(tree.root);
+    TreeWithChildAndSubChild<MpttNode> tree = new TreeWithChildAndSubChild<>(treeRepo, utils);
+    List<MpttNode> actual = treeRepo.findChildren(tree.root);
     assertThat(actual.size(), is(1));
     assertThat(actual, containsInRelativeOrder(tree.child1));
   }
 
   @Test
   public void givenTreeWithChildAndSubChild_whenPrintTree_thenOK() {
-    var tree = new TreeWithChildAndSubChild<>(treeRepo, utils);
-    var actual = utils.printTree(tree.root);
+    TreeWithChildAndSubChild<MpttNode> tree = new TreeWithChildAndSubChild<>(treeRepo, utils);
+    String actual = utils.printTree(tree.root);
     assertThat(actual, is(tree.getExpected()));
   }
 
   @Test
   public void givenComplexTree1_whenPrintTree_thenOK() {
-    var tree = new ComplexTree1<>(treeRepo, utils);
-    var actual = utils.printTree(tree.root);
+    ComplexTree1<MpttNode> tree = new ComplexTree1<>(treeRepo, utils);
+    String actual = utils.printTree(tree.root);
     assertThat(actual, is(tree.getExpected()));
   }
 
   @Test
   public void givenComplexTree1_whenFindChildren_thenContainsTwoChildren() {
-    var tree = new ComplexTree1<>(treeRepo, utils);
-    var actual = treeRepo.findChildren(tree.root);
+    ComplexTree1<MpttNode> tree = new ComplexTree1<>(treeRepo, utils);
+    List<MpttNode> actual = treeRepo.findChildren(tree.root);
     assertThat(actual.size(), is(2));
     assertThat(actual, containsInRelativeOrder(tree.child1, tree.child2));
   }
 
   @Test
   public void givenComplexTree2_whenPrintTree_thenOK() {
-    var tree = new ComplexTree2<>(treeRepo, utils);
-    var actual = utils.printTree(tree.root);
+    ComplexTree2<MpttNode> tree = new ComplexTree2<>(treeRepo, utils);
+    String actual = utils.printTree(tree.root);
     assertThat(actual, is(tree.getExpected()));
   }
 
   @Test
   public void givenComplexTree2_whenFindChildren_thenOK() {
-    var tree = new ComplexTree2<>(treeRepo, utils);
+    ComplexTree2<MpttNode> tree = new ComplexTree2<>(treeRepo, utils);
 
-    var actual1 = treeRepo.findChildren(tree.root);
+    List<MpttNode> actual1 = treeRepo.findChildren(tree.root);
     assertThat(actual1.size(), is(2));
     assertThat(actual1, containsInRelativeOrder(tree.child1, tree.child2));
 
-    var actual2 = treeRepo.findChildren(tree.child1);
+    List<MpttNode> actual2 = treeRepo.findChildren(tree.child1);
     assertThat(actual2.size(), is(1));
     assertThat(actual2, contains(tree.subChild1));
 
-    var actual3 = treeRepo.findChildren(tree.subChild1);
+    List<MpttNode> actual3 = treeRepo.findChildren(tree.subChild1);
     assertThat(actual3.size(), is(1));
     assertThat(actual3, contains(tree.subSubChild1));
   }
 
   @Test
   public void givenComplexTree3_whenPrintTree_thenOK() {
-    var tree = new ComplexTree3<>(treeRepo, utils);
+    ComplexTree3<MpttNode> tree = new ComplexTree3<>(treeRepo, utils);
 
-    var actual = utils.printTree(tree.root);
+    String actual = utils.printTree(tree.root);
     assertThat(actual, is(tree.getExpected()));
 
-    var actualPartial = utils.printTree(tree.child1);
+    String actualPartial = utils.printTree(tree.child1);
     assertThat(actualPartial, is(tree.getExpectedPartial()));
   }
 
   @Test
   public void givenComplexTree3_whenFindChildren_thenOK() {
-    var tree = new ComplexTree3<>(treeRepo, utils);
+    ComplexTree3<MpttNode> tree = new ComplexTree3<>(treeRepo, utils);
 
-    var actual1 = treeRepo.findChildren(tree.root);
+    List<MpttNode> actual1 = treeRepo.findChildren(tree.root);
     assertThat(actual1.size(), is(2));
     assertThat(actual1, containsInRelativeOrder(tree.child1, tree.child2));
 
-    var actual2 = treeRepo.findChildren(tree.child1);
+    List<MpttNode> actual2 = treeRepo.findChildren(tree.child1);
     assertThat(actual2.size(), is(2));
     assertThat(actual2, containsInRelativeOrder(tree.subChild1, tree.subChild2));
   }
@@ -270,8 +271,8 @@ public class MpttNodeRepoTest {
   @Test
   public void givenParentNotAttachedToTree_whenRemoveChild_thenError()
       throws TreeRepository.NodeNotInTree, TreeRepository.NodeNotChildOfParent {
-    var parent = new MpttNode("parent");
-    var child = new MpttNode("child");
+    MpttNode parent = new MpttNode("parent");
+    MpttNode child = new MpttNode("child");
 
     exceptionRule.expect(MpttRepository.NodeNotInTree.class);
     exceptionRule.expectMessage(String.format("Parent node not attached to any tree: %s", parent));
@@ -281,8 +282,8 @@ public class MpttNodeRepoTest {
   @Test
   public void givenParentAndChildInDifferentTrees_whenRemoveChild_thenError()
       throws TreeRepository.NodeNotInTree, TreeRepository.NodeNotChildOfParent {
-    var tree1 = new TreeWithOneChild<>(treeRepo, utils);
-    var tree2 = new TreeWithOneChild<>(treeRepo, utils);
+    TreeWithOneChild<MpttNode> tree1 = new TreeWithOneChild<>(treeRepo, utils);
+    TreeWithOneChild<MpttNode> tree2 = new TreeWithOneChild<>(treeRepo, utils);
 
     exceptionRule.expect(MpttRepository.NodeNotInTree.class);
     exceptionRule
@@ -294,7 +295,7 @@ public class MpttNodeRepoTest {
   @Test
   public void givenParentAndChild_whenRemoveChildReverseParentAndChild_thenError()
       throws TreeRepository.NodeNotInTree, TreeRepository.NodeNotChildOfParent {
-    var tree = new TreeWithOneChild<>(treeRepo, utils);
+    TreeWithOneChild<MpttNode> tree = new TreeWithOneChild<>(treeRepo, utils);
 
     exceptionRule.expect(MpttRepository.NodeNotChildOfParent.class);
     treeRepo.removeChild(tree.child1, tree.root);
@@ -303,13 +304,13 @@ public class MpttNodeRepoTest {
   @Test
   public void givenTreeWithOneChild_whenRemoveChild_thenOK()
       throws TreeRepository.NodeNotInTree, TreeRepository.NodeNotChildOfParent {
-    var tree = new TreeWithOneChild<>(treeRepo, utils);
+    TreeWithOneChild<MpttNode> tree = new TreeWithOneChild<>(treeRepo, utils);
 
     LOG.debug(String.format("before:\n%s", utils.printTree(tree.root)));
-    var removed = treeRepo.removeChild(tree.root, tree.child1);
+    List<MpttNode> removed = treeRepo.removeChild(tree.root, tree.child1);
     LOG.debug(String.format("after\n%s", utils.printTree(tree.root)));
 
-    var actual = treeRepo.findByName(tree.root.getName());
+    MpttNode actual = treeRepo.findByName(tree.root.getName());
     assertThat(actual.getLft(), is(1L));
     assertThat(actual.getRgt(), is(2L));
 
@@ -324,13 +325,13 @@ public class MpttNodeRepoTest {
   @Test
   public void givenTreeWithChildAndSubChild_whenRemoveChild_thenOK()
       throws TreeRepository.NodeNotInTree, TreeRepository.NodeNotChildOfParent {
-    var tree = new TreeWithChildAndSubChild<>(treeRepo, utils);
+    TreeWithChildAndSubChild<MpttNode> tree = new TreeWithChildAndSubChild<>(treeRepo, utils);
 
     LOG.debug(String.format("before:\n%s", utils.printTree(tree.root)));
-    var removed = treeRepo.removeChild(tree.root, tree.child1);
+    List<MpttNode> removed = treeRepo.removeChild(tree.root, tree.child1);
     LOG.debug(String.format("after:\n%s", utils.printTree(tree.root)));
 
-    var actual = treeRepo.findByName(tree.root.getName());
+    MpttNode actual = treeRepo.findByName(tree.root.getName());
     assertThat(actual.getLft(), is(1L));
     assertThat(actual.getRgt(), is(2L));
 
@@ -345,19 +346,19 @@ public class MpttNodeRepoTest {
   @Test
   public void givenTreeWithTwoChildren_whenRemoveChild_thenOK()
       throws TreeRepository.NodeNotInTree, TreeRepository.NodeNotChildOfParent {
-    var tree = new TreeWithTwoChildren<>(treeRepo, utils);
+    TreeWithTwoChildren<MpttNode> tree = new TreeWithTwoChildren<>(treeRepo, utils);
 
     LOG.debug(String.format("before:\n%s", utils.printTree(tree.root)));
-    var removed = treeRepo.removeChild(tree.root, tree.child1);
+    List<MpttNode> removed = treeRepo.removeChild(tree.root, tree.child1);
     LOG.debug(String.format("after:\n%s", utils.printTree(tree.root)));
 
-    var actual = treeRepo.findByName(tree.root.getName());
+    MpttNode actual = treeRepo.findByName(tree.root.getName());
     assertThat(actual.getLft(), is(1L));
     assertThat(actual.getRgt(), is(4L));
     assertThat(tree.child2.getLft(), is(2L));
     assertThat(tree.child2.getRgt(), is(3L));
 
-    var actualChildren = treeRepo.findChildren(tree.root);
+    List<MpttNode> actualChildren = treeRepo.findChildren(tree.root);
     assertThat(actualChildren.size(), is(1));
     assertThat(actualChildren, contains(tree.child2));
 
@@ -370,19 +371,19 @@ public class MpttNodeRepoTest {
   @Test
   public void givenTreeWithChildAndSubChild_whenRemoveSubChild_thenOK()
       throws TreeRepository.NodeNotInTree, TreeRepository.NodeNotChildOfParent {
-    var tree = new TreeWithChildAndSubChild<>(treeRepo, utils);
+    TreeWithChildAndSubChild<MpttNode> tree = new TreeWithChildAndSubChild<>(treeRepo, utils);
 
     LOG.debug(String.format("before:\n%s", utils.printTree(tree.root)));
-    var removed = treeRepo.removeChild(tree.root, tree.subChild1);
+    List<MpttNode> removed = treeRepo.removeChild(tree.root, tree.subChild1);
     LOG.debug(String.format("after:\n%s", utils.printTree(tree.root)));
 
-    var actual = treeRepo.findByName(tree.root.getName());
+    MpttNode actual = treeRepo.findByName(tree.root.getName());
     assertThat(actual.getLft(), is(1L));
     assertThat(actual.getRgt(), is(4L));
     assertThat(tree.child1.getLft(), is(2L));
     assertThat(tree.child1.getRgt(), is(3L));
 
-    var actualChildren = treeRepo.findChildren(tree.root);
+    List<MpttNode> actualChildren = treeRepo.findChildren(tree.root);
     assertThat(actualChildren.size(), is(1));
     assertThat(actualChildren, contains(tree.child1));
 
@@ -397,73 +398,73 @@ public class MpttNodeRepoTest {
   @Test
   public void givenComplexTree3_whenRemoveChild1_thenOK()
       throws TreeRepository.NodeNotInTree, TreeRepository.NodeNotChildOfParent {
-    var tree = new ComplexTree3<>(treeRepo, utils);
+    ComplexTree3<MpttNode> tree = new ComplexTree3<>(treeRepo, utils);
 
     LOG.debug(String.format("before:\n%s", utils.printTree(tree.root)));
     treeRepo.removeChild(tree.root, tree.child1);
     LOG.debug(String.format("after:\n%s", utils.printTree(tree.root)));
 
-    var actual = utils.printTree(tree.root);
+    String actual = utils.printTree(tree.root);
     assertThat(actual, is(tree.getExpectedAfterChild1Removal()));
   }
 
   @Test
   public void givenComplexTree3_whenRemoveChild2_thenOK()
       throws TreeRepository.NodeNotInTree, TreeRepository.NodeNotChildOfParent {
-    var tree = new ComplexTree3<>(treeRepo, utils);
+    ComplexTree3<MpttNode> tree = new ComplexTree3<>(treeRepo, utils);
 
     LOG.debug(String.format("before:\n%s", utils.printTree(tree.root)));
     treeRepo.removeChild(tree.root, tree.child2);
     LOG.debug(String.format("after:\n%s", utils.printTree(tree.root)));
 
-    var actual = utils.printTree(tree.root);
+    String actual = utils.printTree(tree.root);
     assertThat(actual, is(tree.getExpectedAfterChild2Removal()));
   }
 
   @Test
   public void givenComplexTree3_whenFindTreeRoot_thenOK() {
-    var tree = new ComplexTree3<>(treeRepo, utils);
+    ComplexTree3<MpttNode> tree = new ComplexTree3<>(treeRepo, utils);
 
     LOG.debug(String.format("tree to search for root:\n%s", utils.printTree(tree.root)));
 
-    var actual = treeRepo.findTreeRoot(tree.treeId);
+    MpttNode actual = treeRepo.findTreeRoot(tree.treeId);
     assertThat(actual, is(tree.root));
   }
 
   @Test
   public void givenRoot_whenFindAncestorsOfRoot_thenEmptyList() {
-    var tree = new TreeWithNoChildren<>(treeRepo, utils);
-    var actual = treeRepo.findAncestors(tree.root);
+    TreeWithNoChildren<MpttNode> tree = new TreeWithNoChildren<>(treeRepo, utils);
+    List<MpttNode> actual = treeRepo.findAncestors(tree.root);
     assertThat(actual, is(empty()));
   }
 
   @Test
   public void givenTreeWithOneChild_whenFindAncestorsOfChild_thenListOfRoot() {
-    var tree = new TreeWithOneChild<>(treeRepo, utils);
-    var actual = treeRepo.findAncestors(tree.child1);
+    TreeWithOneChild<MpttNode> tree = new TreeWithOneChild<>(treeRepo, utils);
+    List<MpttNode> actual = treeRepo.findAncestors(tree.child1);
     assertThat(actual.size(), is(1));
     assertThat(actual, contains(tree.root));
   }
 
   @Test
   public void givenTreeWithChildAndSubChild_whenFindAncestors_thenOK() {
-    var tree = new TreeWithChildAndSubChild<>(treeRepo, utils);
+    TreeWithChildAndSubChild<MpttNode> tree = new TreeWithChildAndSubChild<>(treeRepo, utils);
 
-    var ancestorsOfRoot = treeRepo.findAncestors(tree.root);
+    List<MpttNode> ancestorsOfRoot = treeRepo.findAncestors(tree.root);
     assertThat(ancestorsOfRoot, is(empty()));
 
-    var ancestorsOfChild = treeRepo.findAncestors(tree.child1);
+    List<MpttNode> ancestorsOfChild = treeRepo.findAncestors(tree.child1);
     assertThat(ancestorsOfChild.size(), is(1));
     assertThat(ancestorsOfChild, contains(tree.root));
 
-    var ancestorsOfSubChild = treeRepo.findAncestors(tree.subChild1);
+    List<MpttNode> ancestorsOfSubChild = treeRepo.findAncestors(tree.subChild1);
     assertThat(ancestorsOfSubChild.size(), is(2));
     assertThat(ancestorsOfSubChild, containsInRelativeOrder(tree.root, tree.child1));
   }
 
   @Test
   public void givenComplexTree3_whenFindAncestors_thenOK() {
-    var tree = new ComplexTree3<>(treeRepo, utils);
+    ComplexTree3<MpttNode> tree = new ComplexTree3<>(treeRepo, utils);
     assertThat(treeRepo.findAncestors(tree.subChild1), containsInRelativeOrder(tree.root, tree.child1));
     assertThat(treeRepo.findAncestors(tree.subChild2), containsInRelativeOrder(tree.root, tree.child1));
     assertThat(treeRepo.findAncestors(tree.subSubChild1),
@@ -472,21 +473,21 @@ public class MpttNodeRepoTest {
 
   @Test
   public void givenRoot_whenFindParentOfRoot_thenNull() throws TreeRepository.NodeAlreadyAttachedToTree {
-    var root = new MpttNode("root");
+    MpttNode root = new MpttNode("root");
     treeRepo.startTree(root);
     assertThat(treeRepo.findParent(root), is(Optional.empty()));
   }
 
   @Test
   public void givenTreeWithOneChild_whenFindParentOfChild_thenRoot() {
-    var tree = new TreeWithOneChild<>(treeRepo, utils);
+    TreeWithOneChild<MpttNode> tree = new TreeWithOneChild<>(treeRepo, utils);
     assertThat(treeRepo.findParent(tree.root), is(Optional.empty()));
     assertThat(treeRepo.findParent(tree.child1).get(), is(tree.root));
   }
 
   @Test
   public void givenTreeWithChildAndSubChild_whenFindParent_thenOK() {
-    var tree = new TreeWithChildAndSubChild<>(treeRepo, utils);
+    TreeWithChildAndSubChild<MpttNode> tree = new TreeWithChildAndSubChild<>(treeRepo, utils);
     assertThat(treeRepo.findParent(tree.root), is(Optional.empty()));
     assertThat(treeRepo.findParent(tree.child1).get(), is(tree.root));
     assertThat(treeRepo.findParent(tree.subChild1).get(), is(tree.child1));
@@ -494,7 +495,7 @@ public class MpttNodeRepoTest {
 
   @Test
   public void givenTreeWithTwoChildren_whenFindParent_thenOK() {
-    var tree = new TreeWithTwoChildren<>(treeRepo, utils);
+    TreeWithTwoChildren<MpttNode> tree = new TreeWithTwoChildren<>(treeRepo, utils);
     assertThat(treeRepo.findParent(tree.root), is(Optional.empty()));
     assertThat(treeRepo.findParent(tree.child1).get(), is(tree.root));
     assertThat(treeRepo.findParent(tree.child2).get(), is(tree.root));
@@ -502,7 +503,7 @@ public class MpttNodeRepoTest {
 
   @Test
   public void givenComplexTree3_whenFindParent_thenOK() {
-    var tree = new ComplexTree3<>(treeRepo, utils);
+    ComplexTree3<MpttNode> tree = new ComplexTree3<>(treeRepo, utils);
     assertThat(treeRepo.findParent(tree.root), is(Optional.empty()));
     assertThat(treeRepo.findParent(tree.child1).get(), is(tree.root));
     assertThat(treeRepo.findParent(tree.child2).get(), is(tree.root));

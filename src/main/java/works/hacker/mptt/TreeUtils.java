@@ -22,11 +22,11 @@ public class TreeUtils<T extends TreeEntity> {
    * @return the string representation of the tree / sub-tree
    */
   public String printTree(T node) {
-    var rootString = printRootNode(node);
+    String rootString = printRootNode(node);
 
-    var children = treeRepo.findChildren(node);
-    var levels = Collections.unmodifiableList(Collections.singletonList(0));
-    var childrenString = children.isEmpty() ? "" :
+    List<T> children = treeRepo.findChildren(node);
+    List<Integer> levels = Collections.unmodifiableList(Collections.singletonList(0));
+    String childrenString = children.isEmpty() ? "" :
         "\n" +
             IntStream.range(0, children.size())
                 .mapToObj(i -> i < children.size() - 1 ?
@@ -38,8 +38,8 @@ public class TreeUtils<T extends TreeEntity> {
   }
 
   protected String printSubTree(T node, List<Integer> levels, boolean isLast) {
-    var children = treeRepo.findChildren(node);
-    var nextLevels = concatLevel(levels, isLast ? 0 : 1);
+    List<T> children = treeRepo.findChildren(node);
+    List<Integer> nextLevels = concatLevel(levels, isLast ? 0 : 1);
     return
         (isLast ? printLastChildNode(node, levels) : printChildNode(node, levels)) +
             (children.isEmpty() ? "" : "\n" +
