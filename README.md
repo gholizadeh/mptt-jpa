@@ -1,7 +1,5 @@
 # Modified Pre-order Tree Traversal - Implementation in Java 8 Using JPA
 
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/works.hacker/mptt-jpa/badge.svg)](https://search.maven.org/artifact/works.hacker/mptt-jpa)
-
 **The source library is compatible with Java 11 and above, this is an edit to make this library compatible with Java 8**
 
 ## Introduction
@@ -77,17 +75,17 @@ The resulting flat table to persist in the relational database would be:
 
 ## Usage
 
-Even though the MPTT implementation provided in [`works.hacker.mptt`](https://github.com/hacker-works/mptt-jpa/tree/master/src/main/java/works/hacker/mptt) has no dependencies on Spring or other non-standard libraries, the project unit / integration tests are using Spring; and the demo application is a very-simple Spring Boot application too.
+Even though the MPTT implementation provided in [`works.hacker.mptt`](https://github.com/gholizadeh/mptt-jpa/tree/master/src/main/java/works/hacker/mptt) has no dependencies on Spring or other non-standard libraries, the project unit / integration tests are using Spring; and the demo application is a very-simple Spring Boot application too.
 
-[DEMO SPRING BOOT APP - BROWSE SOURCE CODE ON GITHUB](https://github.com/hacker-works/mptt-jpa/tree/develop/demo)
+[DEMO SPRING BOOT APP - BROWSE SOURCE CODE ON GITHUB](https://github.com/gholizadeh/mptt-jpa/tree/develop/demo)
 
-**NOTE:** Instructions are completely analogical when using the *dyadic fractions*-implementation. Simply use the [`works.hacker.mptt.dyadic`](https://github.com/hacker-works/mptt-jpa/tree/master/src/main/java/works/hacker/mptt/dyadic/)-package in place of [`works.hacker.mptt.classic`](https://github.com/hacker-works/mptt-jpa/tree/master/src/main/java/works/hacker/mptt/classic/).
+**NOTE:** Instructions are completely analogical when using the *dyadic fractions*-implementation. Simply use the [`works.hacker.mptt.dyadic`](https://github.com/gholizadeh/mptt-jpa/tree/master/src/main/java/works/hacker/mptt/dyadic/)-package in place of [`works.hacker.mptt.classic`](https://github.com/gholizadeh/mptt-jpa/tree/master/src/main/java/works/hacker/mptt/classic/).
 
 To use `mptt-jpa`:
-1. Add the `works.hacker.mptt-jpa`-dependency to the `pom.xml` *(in case Maven is used)*.
-2. Add a custom entity-type by extending the [`works.hacker.mptt.classic.MpttEntity`](https://github.com/hacker-works/mptt-jpa/blob/master/src/main/java/works/hacker/mptt/classic/MpttEntity.java)-mapped superclass.
-3. Add a custom repository interface by extending the [`works.hacker.works.MpttRepository`](https://github.com/hacker-works/mptt-jpa/blob/master/src/main/java/works/hacker/mptt/classic//MpttRepository.java)-interface.
-4. Add a custom repository implementation by extending the reference [`works.hacker.works.MpttRepositoryImpl`](https://github.com/hacker-works/mptt-jpa/blob/master/src/main/java/works/hacker/mptt/classic/MpttRepositoryImpl.java)-implementation.
+1. Add the `works.hacker.mptt-jpa`-dependency to the `pom.xml`.
+2. Add a custom entity-type by extending the [`works.hacker.mptt.classic.MpttEntity`](https://github.com/gholizadeh/mptt-jpa/blob/master/src/main/java/works/hacker/mptt/classic/MpttEntity.java)-mapped superclass.
+3. Add a custom repository interface by extending the [`works.hacker.works.MpttRepository`](https://github.com/gholizadeh/mptt-jpa/blob/master/src/main/java/works/hacker/mptt/classic//MpttRepository.java)-interface.
+4. Add a custom repository implementation by extending the reference [`works.hacker.works.MpttRepositoryImpl`](https://github.com/gholizadeh/mptt-jpa/blob/master/src/main/java/works/hacker/mptt/classic/MpttRepositoryImpl.java)-implementation.
 
 #### Add `mptt-jpa` to the POM
 
@@ -96,7 +94,10 @@ To use `mptt-jpa`:
     <groupId>works.hacker</groupId>
     <artifactId>mptt-jpa</artifactId>
     <version>0.1.1</version>
+    <scope>system</scope>
+    <systemPath>${project.basedir}/src/main/resources/mptt-jpa-0.1.1-java8.jar</systemPath>
 </dependency>
+
 ``` 
 
 #### Custom Entity Type

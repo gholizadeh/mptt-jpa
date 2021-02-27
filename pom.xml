@@ -9,7 +9,7 @@
 
   <name>mptt-jpa</name>
   <description>Modified Preorder Tree Traversal - Java implementation using JPA</description>
-  <url>https://github.com/hacker-works/mptt-jpa</url>
+  <url>https://github.com/gholizadeh/mptt-jpa</url>
 
   <licenses>
     <license>
@@ -26,23 +26,6 @@
       <organizationUrl>http://hacker.works</organizationUrl>
     </developer>
   </developers>
-
-  <scm>
-    <connection>scm:git:git://github.com/hacker-works/mptt-jpa.git</connection>
-    <developerConnection>scm:git:ssh://github.com:hacker-works/mptt-jpa.git</developerConnection>
-    <url>http://github.com/hacker-works/mptt-jpa/tree/master</url>
-  </scm>
-
-  <distributionManagement>
-    <snapshotRepository>
-      <id>ossrh</id>
-      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-    </snapshotRepository>
-    <repository>
-      <id>ossrh</id>
-      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-    </repository>
-  </distributionManagement>
 
   <parent>
     <groupId>org.springframework.boot</groupId>
@@ -102,6 +85,13 @@
   <build>
     <plugins>
       <plugin>
+        <artifactId>maven-deploy-plugin</artifactId>
+        <version>2.8.1</version>
+        <configuration>
+          <altDeploymentRepository>internal.repo::default::file://${project.build.directory}/mvn-repo</altDeploymentRepository>
+        </configuration>
+      </plugin>
+      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-source-plugin</artifactId>
         <version>2.2.1</version>
@@ -129,31 +119,6 @@
             </configuration>
           </execution>
         </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-gpg-plugin</artifactId>
-        <version>1.5</version>
-        <executions>
-          <execution>
-            <id>sign-artifacts</id>
-            <phase>verify</phase>
-            <goals>
-              <goal>sign</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.sonatype.plugins</groupId>
-        <artifactId>nexus-staging-maven-plugin</artifactId>
-        <version>1.6.7</version>
-        <extensions>true</extensions>
-        <configuration>
-          <serverId>ossrh</serverId>
-          <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-          <autoReleaseAfterClose>true</autoReleaseAfterClose>
-        </configuration>
       </plugin>
     </plugins>
   </build>
